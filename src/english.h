@@ -27,5 +27,6 @@ void initialize_engine(EnglishEngine *engine);
 void process_prompt(EnglishEngine *engine, const char *prompt);
 void start_interactive_chat(EnglishEngine *engine); // This will be called from main now
 char *lookup_word_definition(EnglishEngine *engine, const char *word);
+void pre_process_wiktionary(EnglishEngine *engine);
 
 #endif // ENGLISH_H
