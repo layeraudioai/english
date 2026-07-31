@@ -59,15 +59,38 @@ void initialize_engine(EnglishEngine *engine) {
 }
 
 void process_prompt(EnglishEngine *engine, const char *prompt) {
-    printf("Engine is processing: %s\n", prompt);
-    // For now, let's treat the first word of the prompt as the word to look up.
-    WordAssembly *wa = get_word_assembly(engine, prompt);
-    if (wa) {
-        printf("Definition of '%s': %s\n", prompt, wa->definition);
-        free_word_assembly(wa);
-    } else {
-        printf("Definition not found.\n");
+    char *prompt_copy = strdup(prompt);
+    if (!prompt_copy) {
+        fprintf(stderr, "Failed to allocate memory for prompt processing.\n");
+        return;
     }
+
+    char *response = malloc(4096); // Start with a reasonable buffer
+    if (!response) {
+        fprintf(stderr, "Failed to allocate memory for response.\n");
+        free(prompt_copy);
+        return;
+    }
+    response[0] = '\0';
+
+    char *word = strtok(prompt_copy, " ");
+    while (word != NULL) {
+        WordAssembly *wa = get_word_assembly(engine, word);
+        if (wa && wa->definition) {
+            strcat(response, wa->definition);
+            free_word_assembly(wa);
+        } else {
+            // If no definition, append the original word.
+            strcat(response, word);
+        }
+        strcat(response, " "); // Add a space between parts
+
+        word = strtok(NULL, " ");
+    }
+
+    printf("Substitution: %s\n", response);
+    free(response);
+    free(prompt_copy);
 }
 
 char *extract_definition_from_json(cJSON *entry) {
@@ -123,15 +146,8 @@ void start_interactive_chat(EnglishEngine *engine) {
         
         if (strcmp(buffer, "exit") == 0) break;
         
-        // Lookup word in interactive mode
-        WordAssembly *wa = get_word_assembly(engine, buffer);
-        if (wa) {
-            printf("Definition: %s\n", wa->definition);
-            printf("Assembly: \n%s\n", wa->assembly_code);
-            free_word_assembly(wa);
-        } else {
-            printf("Definition not found.\n");
-        }
+        // Process the prompt which may contain multiple words
+        process_prompt(engine, buffer);
     }
 }
 
