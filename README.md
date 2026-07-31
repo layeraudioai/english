@@ -1,3 +1,4 @@
+to use: put https://kaikki.org/dictionary/raw-wiktextract-data.jsonl in the same dir as english.exe
 ---
 ENGLISH
 ---
