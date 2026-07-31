@@ -205,10 +205,3 @@ void pre_process_wiktionary(EnglishEngine *engine) {
     printf("Finished processing. Processed %d words.\n", count);
     fclose(fp);
 }
-
-int main(int argc, char *argv[]) {
-    EnglishEngine engine;
-    initialize_engine(&engine);
-    pre_process_wiktionary(&engine);
-    return 0;
-}
