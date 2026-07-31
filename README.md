@@ -1,4 +1,9 @@
+to compile: put https://kaikki.org/dictionary/raw-wiktextract-data.jsonl in deps/wiktionary/ in the project dir
 to use: put https://kaikki.org/dictionary/raw-wiktextract-data.jsonl in the same dir as english.exe
+licenses:
+wiktionary english
+wikiextract
+cjson (version needed is included)
 ---
 ENGLISH
 ---

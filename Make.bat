@@ -1,0 +1,1 @@
+gcc -Iinclude main.c src/english.c src/json_parser.c src/assembly_generator.c deps/cjson/cJSON.c -o english.exe
