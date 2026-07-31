@@ -15,7 +15,7 @@ typedef struct {
 } WordImplementation;
 
 // Core engine structure
-typedef struct {
+typedef struct EnglishEngine {
     // Path to the wiktionary data
     char *data_path;
     // Current project directory
