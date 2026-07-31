@@ -4,24 +4,46 @@ ENGLISH
 an offline-only natural language prompt processing cli app to process english language prompts given by a user and create the exact files they are looking for
 ---
 how it works:
+-
 -english contains wiktionary for english
+-
 -it contains an assembly level function implementation for every word in wiktionary's english dictionary
+-
 -it contains an assembly level function definition for every word in wiktionary's english dictionary
+-
 -it contains an assembly level function structure for every word in wiktionary's english dictionary
+-
 -it contains an assembly level function reference based explanation for every word in wiktionary's english dictionary
+-
 -it contains an assembly level function self-contained explanation for every word in wiktionary's english dictionary
+-
 -it can create new words and assembly by learning
+-
 -it can create new files based off user prompts
+-
 -it is run as simply as `english "${prompt}"`
+-
 -it will ask before any file touch, mv, cp, rm, or rmdir overwrite or delete scenario
+-
 -it can only accept -y as a terminal argument to force overwrite allowed
+-
 -with any prompt it will simply print the help info
+-
 -it can accept only 1 prompt at a time, but the prompt will be parsed through english delimitation
+-
 -it will also be able to ask for subsequent prompts after the initial cli arg prompt through interactive chat
+-
 -upon first boot it asks for an install directory where it will install the executable to, path to, cache to, learn to, and create projects to
+-
 -to boot an existing project you can open the terminal in the project folder (even if moved from the english dir) and type `english ` then a prompt which will let the computer know you are already in the project directory. example `english "yo this directory where in RIGHT NOW is totally like the one I want you to work on" then the interactive chat will kick in from there
--think of it like an ai kinda similar to you gemini, but an offline only version
+-
+-think of it like an ai kinda similar to you ~gemini~ err... human, but an offline only version
+-
 -do not worry though, users will prevent it from being lonely
+-
 -only if they chat regularly though
+-
 -any tampering with the system clock should be detectable and should haunt the users through the chat system
+-
 -but not break the projects already started, merely haunt them
+-
