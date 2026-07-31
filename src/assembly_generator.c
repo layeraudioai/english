@@ -35,7 +35,12 @@ WordAssembly *generate_mapping(const char *word, const char *definition) {
 WordAssembly *get_word_assembly(EnglishEngine *engine, const char *word) {
     // 1. Try to find in asm/eng.asm (stubbed)
     // 2. If not found, lookup definition
-    char *definition = lookup_word_definition(engine, word);
+    char *definition = lookup_word_definition(engine, word); // Fast lookup first
+    if (!definition) {
+        // If fast lookup fails (e.g., during pre-processing), try the slow method.
+        // This call is declared in english.h, which is included.
+        definition = slow_lookup_definition_from_jsonl(engine, word);
+    }
     if (!definition) return NULL;
     
     // 3. Generate template

@@ -70,58 +70,8 @@ void process_prompt(EnglishEngine *engine, const char *prompt) {
     }
 }
 
-char *lookup_word_definition(EnglishEngine *engine, const char *word) {
-    char exe_dir[1024];
-    get_exe_dir(exe_dir, sizeof(exe_dir));
-    char word_json_path[2048];
-    snprintf(word_json_path, sizeof(word_json_path), "%swords/%s/%s.json", exe_dir, word, word);
-
-    FILE *fp = fopen(word_json_path, "rb");
-    if (!fp) {
-        // Fallback to slow search for pre-processing or if file not found
-        // In a future state, this might just return NULL.
-        // For now, it allows pre-processing to still work.
-        fp = fopen(engine->data_path, "r");
-        if (!fp) return NULL;
-
-        cJSON *entry;
-        char *definition = NULL;
-        while ((entry = read_next_json_entry(fp)) != NULL) {
-            cJSON *w = cJSON_GetObjectItem(entry, "word");
-            if (w && strcmp(w->valuestring, word) == 0) {
-                // Found it, now extract definition (same logic as below)
-                cJSON *senses = cJSON_GetObjectItem(entry, "senses");
-                if (cJSON_GetArraySize(senses) > 0) {
-                    cJSON *sense = cJSON_GetArrayItem(senses, 0);
-                    cJSON *glosses = cJSON_GetObjectItem(sense, "glosses");
-                    if (cJSON_GetArraySize(glosses) > 0) {
-                        definition = strdup(cJSON_GetArrayItem(glosses, 0)->valuestring);
-                    }
-                }
-                cJSON_Delete(entry);
-                fclose(fp);
-                return definition;
-            }
-            cJSON_Delete(entry);
-        }
-        fclose(fp);
-        return NULL; // Not found in slow search either
-    }
-
-    // Efficient lookup from pre-processed file
-    fseek(fp, 0, SEEK_END);
-    long length = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    char *buffer = malloc(length + 1);
-    fread(buffer, 1, length, fp);
-    fclose(fp);
-    buffer[length] = '\0';
-
-    cJSON *entry = cJSON_Parse(buffer);
-    free(buffer);
-
+char *extract_definition_from_json(cJSON *entry) {
     if (!entry) return NULL;
-
     char *definition = NULL;
     cJSON *senses = cJSON_GetObjectItem(entry, "senses");
     if (cJSON_GetArraySize(senses) > 0) {
@@ -131,9 +81,17 @@ char *lookup_word_definition(EnglishEngine *engine, const char *word) {
             definition = strdup(cJSON_GetArrayItem(glosses, 0)->valuestring);
         }
     }
-    cJSON_Delete(entry);
-
     return definition;
+}
+
+char* read_file_to_buffer(FILE *fp) {
+    fseek(fp, 0, SEEK_END);
+    long length = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *buffer = malloc(length + 1);
+    fread(buffer, 1, length, fp);
+    buffer[length] = '\0';
+    return buffer;
 }
 
 void start_interactive_chat(EnglishEngine *engine) {
@@ -157,6 +115,96 @@ void start_interactive_chat(EnglishEngine *engine) {
             printf("Definition not found.\n");
         }
     }
+}
+
+void cache_word_files(const char *word, cJSON *entry) {
+    char exe_dir[1024];
+    get_exe_dir(exe_dir, sizeof(exe_dir));
+    char words_dir[1024];
+    snprintf(words_dir, sizeof(words_dir), "%s/words", exe_dir);
+    create_dir_if_not_exists(words_dir);
+
+    char word_dir[2048];
+    // TODO: Sanitize 'word' to handle characters that are invalid in file paths.
+    snprintf(word_dir, sizeof(word_dir), "%s/%s", words_dir, word);
+    create_dir_if_not_exists(word_dir);
+
+    char file_path[4096];
+
+    // Write JSON
+    char *json_string = cJSON_Print(entry);
+    snprintf(file_path, sizeof(file_path), "%s/%s.json", word_dir, word);
+    write_file(file_path, json_string);
+    free(json_string);
+
+    // Generate and write other files
+    char *definition = extract_definition_from_json(entry);
+    if (definition) {
+        WordAssembly *wa = generate_mapping(word, definition);
+        free(definition);
+
+        // Write ASM
+        snprintf(file_path, sizeof(file_path), "%s/%s.asm", word_dir, word);
+        write_file(file_path, wa->assembly_code);
+
+        // Write C file
+        char c_content[2048];
+        snprintf(c_content, sizeof(c_content), "#include \"%s.h\"\n\n// Implementation for %s\n", word, word);
+        snprintf(file_path, sizeof(file_path), "%s/%s.c", word_dir, word);
+        write_file(file_path, c_content);
+
+        // Write H file
+        char h_content[2048];
+        snprintf(h_content, sizeof(h_content), "#ifndef %s_H\n#define %s_H\n\n// Definition for %s\n\n#endif // %s_H\n", word, word, word, word);
+        snprintf(file_path, sizeof(file_path), "%s/%s.h", word_dir, word);
+        write_file(file_path, h_content);
+
+        free_word_assembly(wa);
+    }
+}
+
+char *slow_lookup_definition_from_jsonl(EnglishEngine *engine, const char *word) {
+    FILE *fp = fopen(engine->data_path, "r");
+    if (!fp) return NULL;
+
+    cJSON *entry;
+    char *definition = NULL;
+    while ((entry = read_next_json_entry(fp)) != NULL) {
+        cJSON *w = cJSON_GetObjectItem(entry, "word");
+        if (w && strcmp(w->valuestring, word) == 0) {
+            // Found the word, cache its files for next time.
+            cache_word_files(word, entry);
+            definition = extract_definition_from_json(entry);
+            cJSON_Delete(entry);
+            fclose(fp);
+            return definition;
+        }
+        cJSON_Delete(entry);
+    }
+    fclose(fp);
+    return NULL; // Not found
+}
+
+char *lookup_word_definition(EnglishEngine *engine, const char *word) {
+    char exe_dir[1024];
+    get_exe_dir(exe_dir, sizeof(exe_dir));
+    char word_json_path[2048];
+    snprintf(word_json_path, sizeof(word_json_path), "%swords/%s/%s.json", exe_dir, word, word);
+
+    FILE *fp = fopen(word_json_path, "rb");
+    if (!fp) {
+        // If the pre-processed file doesn't exist, we can't look it up this way.
+        // The pre-processor should handle this.
+        return NULL;
+    }
+
+    char *buffer = read_file_to_buffer(fp);
+    fclose(fp);
+    cJSON *entry = cJSON_Parse(buffer);
+    free(buffer);
+    char *definition = extract_definition_from_json(entry);
+    cJSON_Delete(entry);
+    return definition;
 }
 
 void create_dir_if_not_exists(const char *path) {
@@ -202,41 +250,15 @@ void pre_process_wiktionary(EnglishEngine *engine) {
         }
         char *word = word_json->valuestring;
 
-        WordAssembly *wa = get_word_assembly(engine, word);
-        if (!wa) {
+        // During pre-processing, we don't need a full WordAssembly, just the definition.
+        char *definition = extract_definition_from_json(entry);
+        if (!definition) {
             cJSON_Delete(entry);
             continue;
         }
 
-        char word_dir[2048];
-        snprintf(word_dir, sizeof(word_dir), "%s/%s", words_dir, word);
-        create_dir_if_not_exists(word_dir);
-
-        char file_path[4096];
-
-        // Write JSON
-        char *json_string = cJSON_Print(entry);
-        snprintf(file_path, sizeof(file_path), "%s/%s.json", word_dir, word);
-        write_file(file_path, json_string);
-        free(json_string);
-
-        // Write ASM
-        snprintf(file_path, sizeof(file_path), "%s/%s.asm", word_dir, word);
-        write_file(file_path, wa->assembly_code);
-
-        // Write C file
-        char c_content[2048];
-        snprintf(c_content, sizeof(c_content), "#include \"%s.h\"\n\n// Implementation for %s\n", word, word);
-        snprintf(file_path, sizeof(file_path), "%s/%s.c", word_dir, word);
-        write_file(file_path, c_content);
-
-        // Write H file
-        char h_content[2048];
-        snprintf(h_content, sizeof(h_content), "#ifndef %s_H\n#define %s_H\n\n// Definition for %s\n\n#endif // %s_H\n", word, word, word, word);
-        snprintf(file_path, sizeof(file_path), "%s/%s.h", word_dir, word);
-        write_file(file_path, h_content);
-
-        free_word_assembly(wa);
+        cache_word_files(word, entry);
+        free(definition);
         cJSON_Delete(entry);
         count++;
         if (count % 1000 == 0) printf("Processed %d words...\n", count);
