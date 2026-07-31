@@ -1,7 +1,7 @@
 ---
 ENGLISH
 ---
-~an offline-only natural language prompt processing cli app to process english language prompts given by a user and create the exact files they are looking for~
+an offline-only natural language prompt processing cli app to process english language prompts given by a user and create the exact files they are looking for
 ---
 how it works:
 -english contains wiktionary for english
