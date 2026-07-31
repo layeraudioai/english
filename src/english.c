@@ -68,7 +68,6 @@ void process_prompt(EnglishEngine *engine, const char *prompt) {
     } else {
         printf("Definition not found.\n");
     }
-    start_interactive_chat(engine);
 }
 
 char *lookup_word_definition(EnglishEngine *engine, const char *word) {

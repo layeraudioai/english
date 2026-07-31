@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/assembly.h"
+
+// Forward declarations to break circular dependency
+struct WordAssembly;
 
 // Represents an assembly-level implementation for a word
 typedef struct {
@@ -24,7 +26,7 @@ typedef struct {
 // Function prototypes
 void initialize_engine(EnglishEngine *engine);
 void process_prompt(EnglishEngine *engine, const char *prompt);
-void start_interactive_chat(EnglishEngine *engine);
+void start_interactive_chat(EnglishEngine *engine); // This will be called from main now
 char *lookup_word_definition(EnglishEngine *engine, const char *word);
 
 #endif // ENGLISH_H

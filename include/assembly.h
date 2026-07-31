@@ -1,7 +1,7 @@
 #ifndef ASSEMBLY_H
 #define ASSEMBLY_H
 
-#include "english.h"
+struct EnglishEngine; // Forward declaration
 
 // Represents the full assembly-level details for a word
 typedef struct {
@@ -13,7 +13,7 @@ typedef struct {
     char *self_contained_explanation;
 } WordAssembly;
 
-WordAssembly *get_word_assembly(EnglishEngine *engine, const char *word);
+WordAssembly *get_word_assembly(struct EnglishEngine *engine, const char *word);
 void free_word_assembly(WordAssembly *wa);
 
 #endif // ASSEMBLY_H
