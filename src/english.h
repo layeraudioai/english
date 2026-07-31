@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../include/assembly.h"
 
 // Represents an assembly-level implementation for a word
 typedef struct {
