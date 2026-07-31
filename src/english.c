@@ -59,10 +59,10 @@ void initialize_engine(EnglishEngine *engine) {
 
 void process_prompt(EnglishEngine *engine, const char *prompt) {
     printf("Engine is processing: %s\n", prompt);
-    // Simple test lookup
-    WordAssembly *wa = get_word_assembly(engine, "dictionary");
+    // For now, let's treat the first word of the prompt as the word to look up.
+    WordAssembly *wa = get_word_assembly(engine, prompt);
     if (wa) {
-        printf("Definition of 'dictionary': %s\n", wa->definition);
+        printf("Definition of '%s': %s\n", prompt, wa->definition);
         free_word_assembly(wa);
     } else {
         printf("Definition not found.\n");
