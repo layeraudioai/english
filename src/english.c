@@ -71,28 +71,68 @@ void process_prompt(EnglishEngine *engine, const char *prompt) {
 }
 
 char *lookup_word_definition(EnglishEngine *engine, const char *word) {
-    FILE *fp = fopen(engine->data_path, "r");
-    if (!fp) return NULL;
+    char exe_dir[1024];
+    get_exe_dir(exe_dir, sizeof(exe_dir));
+    char word_json_path[2048];
+    snprintf(word_json_path, sizeof(word_json_path), "%swords/%s/%s.json", exe_dir, word, word);
 
-    cJSON *entry;
-    char *definition = NULL;
-    while ((entry = read_next_json_entry(fp)) != NULL) {
-        cJSON *w = cJSON_GetObjectItem(entry, "word");
-        if (w && strcmp(w->valuestring, word) == 0) {
-            cJSON *senses = cJSON_GetObjectItem(entry, "senses");
-            if (cJSON_GetArraySize(senses) > 0) {
-                cJSON *sense = cJSON_GetArrayItem(senses, 0);
-                cJSON *glosses = cJSON_GetObjectItem(sense, "glosses");
-                if (cJSON_GetArraySize(glosses) > 0) {
-                    definition = strdup(cJSON_GetArrayItem(glosses, 0)->valuestring);
+    FILE *fp = fopen(word_json_path, "rb");
+    if (!fp) {
+        // Fallback to slow search for pre-processing or if file not found
+        // In a future state, this might just return NULL.
+        // For now, it allows pre-processing to still work.
+        fp = fopen(engine->data_path, "r");
+        if (!fp) return NULL;
+
+        cJSON *entry;
+        char *definition = NULL;
+        while ((entry = read_next_json_entry(fp)) != NULL) {
+            cJSON *w = cJSON_GetObjectItem(entry, "word");
+            if (w && strcmp(w->valuestring, word) == 0) {
+                // Found it, now extract definition (same logic as below)
+                cJSON *senses = cJSON_GetObjectItem(entry, "senses");
+                if (cJSON_GetArraySize(senses) > 0) {
+                    cJSON *sense = cJSON_GetArrayItem(senses, 0);
+                    cJSON *glosses = cJSON_GetObjectItem(sense, "glosses");
+                    if (cJSON_GetArraySize(glosses) > 0) {
+                        definition = strdup(cJSON_GetArrayItem(glosses, 0)->valuestring);
+                    }
                 }
+                cJSON_Delete(entry);
+                fclose(fp);
+                return definition;
             }
             cJSON_Delete(entry);
-            break;
         }
-        cJSON_Delete(entry);
+        fclose(fp);
+        return NULL; // Not found in slow search either
     }
+
+    // Efficient lookup from pre-processed file
+    fseek(fp, 0, SEEK_END);
+    long length = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *buffer = malloc(length + 1);
+    fread(buffer, 1, length, fp);
     fclose(fp);
+    buffer[length] = '\0';
+
+    cJSON *entry = cJSON_Parse(buffer);
+    free(buffer);
+
+    if (!entry) return NULL;
+
+    char *definition = NULL;
+    cJSON *senses = cJSON_GetObjectItem(entry, "senses");
+    if (cJSON_GetArraySize(senses) > 0) {
+        cJSON *sense = cJSON_GetArrayItem(senses, 0);
+        cJSON *glosses = cJSON_GetObjectItem(sense, "glosses");
+        if (cJSON_GetArraySize(glosses) > 0) {
+            definition = strdup(cJSON_GetArrayItem(glosses, 0)->valuestring);
+        }
+    }
+    cJSON_Delete(entry);
+
     return definition;
 }
 
