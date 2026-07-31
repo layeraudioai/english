@@ -11,10 +11,8 @@ typedef struct {
     char *self_contained_explanation;
 } WordAssembly;
 
-// Forward declare to avoid circular dependency with english.h
-struct EnglishEngine;
-
-WordAssembly *get_word_assembly(struct EnglishEngine *engine, const char *word);
+struct EnglishEngine; // Forward declaration is still good practice
+WordAssembly *get_word_assembly(struct EnglishEngine *engine, const char *word); // Use struct keyword
 void free_word_assembly(WordAssembly *wa);
 
 #endif // ASSEMBLY_H

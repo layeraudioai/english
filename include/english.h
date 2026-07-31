@@ -5,15 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "assembly.h"
+
 // Represents an assembly-level implementation for a word
 typedef struct {
     char *word;
-    char *definition;
     char *assembly_code;
-    char *structure;
-    char *ref_explanation;
-    char *self_contained_explanation;
-} WordAssembly;
+    char *explanation;
+} WordImplementation;
 
 // Core engine structure
 typedef struct {
@@ -26,9 +25,8 @@ typedef struct {
 // Function prototypes
 void initialize_engine(EnglishEngine *engine);
 void process_prompt(EnglishEngine *engine, const char *prompt);
-void start_interactive_chat(EnglishEngine *engine);
+void start_interactive_chat(EnglishEngine *engine); // This will be called from main now
 char *lookup_word_definition(EnglishEngine *engine, const char *word);
-WordAssembly *get_word_assembly(EnglishEngine *engine, const char *word);
-void free_word_assembly(WordAssembly *wa);
+void pre_process_wiktionary(EnglishEngine *engine);
 
 #endif // ENGLISH_H

@@ -1,4 +1,4 @@
-#include "../include/english.h"
+#include "../include/english.h" // This path is now correct
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
