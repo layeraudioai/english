@@ -13,6 +13,7 @@ typedef struct {
 
 struct EnglishEngine; // Forward declaration is still good practice
 WordAssembly *get_word_assembly(struct EnglishEngine *engine, const char *word);
+WordAssembly *generate_mapping(const char *word, const char *definition);
 void free_word_assembly(WordAssembly *wa);
 
 #endif // ASSEMBLY_H

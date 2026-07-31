@@ -94,6 +94,24 @@ char* read_file_to_buffer(FILE *fp) {
     return buffer;
 }
 
+void create_dir_if_not_exists(const char *path) {
+#ifdef _WIN32
+    CreateDirectory(path, NULL);
+#else
+    mkdir(path, 0755);
+#endif
+}
+
+void write_file(const char *path, const char *content) {
+    FILE *fp = fopen(path, "w");
+    if (fp) {
+        fputs(content, fp);
+        fclose(fp);
+    } else {
+        fprintf(stderr, "Failed to open file for writing: %s\n", path);
+    }
+}
+
 void start_interactive_chat(EnglishEngine *engine) {
     printf("Interactive chat started. Type 'exit' to quit.\n");
     char buffer[1024];
@@ -117,7 +135,7 @@ void start_interactive_chat(EnglishEngine *engine) {
     }
 }
 
-void cache_word_files(const char *word, cJSON *entry) {
+void cache_word_files(const char *word, struct cJSON *entry) {
     char exe_dir[1024];
     get_exe_dir(exe_dir, sizeof(exe_dir));
     char words_dir[1024];
@@ -205,24 +223,6 @@ char *lookup_word_definition(EnglishEngine *engine, const char *word) {
     char *definition = extract_definition_from_json(entry);
     cJSON_Delete(entry);
     return definition;
-}
-
-void create_dir_if_not_exists(const char *path) {
-#ifdef _WIN32
-    CreateDirectory(path, NULL);
-#else
-    mkdir(path, 0755);
-#endif
-}
-
-void write_file(const char *path, const char *content) {
-    FILE *fp = fopen(path, "w");
-    if (fp) {
-        fputs(content, fp);
-        fclose(fp);
-    } else {
-        fprintf(stderr, "Failed to open file for writing: %s\n", path);
-    }
 }
 
 void pre_process_wiktionary(EnglishEngine *engine) {

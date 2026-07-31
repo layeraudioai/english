@@ -7,6 +7,9 @@
 
 #include "assembly.h"
 
+// Forward declare cJSON to avoid including the full header here
+struct cJSON;
+
 // Represents an assembly-level implementation for a word
 typedef struct {
     char *word;
@@ -27,8 +30,8 @@ void initialize_engine(EnglishEngine *engine);
 void process_prompt(EnglishEngine *engine, const char *prompt);
 void start_interactive_chat(EnglishEngine *engine); // This will be called from main now
 char *lookup_word_definition(EnglishEngine *engine, const char *word);
-char *slow_lookup_definition_from_jsonl(EnglishEngine *engine, const char *word);
-void cache_word_files(const char *word, cJSON *entry);
+char *slow_lookup_definition_from_jsonl(EnglishEngine *engine, const char *word); 
+void cache_word_files(const char *word, struct cJSON *entry);
 void pre_process_wiktionary(EnglishEngine *engine);
 
 #endif // ENGLISH_H
